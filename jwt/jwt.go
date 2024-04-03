@@ -24,8 +24,8 @@ package jwt
 
 import (
 	"errors"
-
 	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 type Module struct{}
@@ -36,8 +36,7 @@ func New() *Module {
 
 var ErrUnsupportedKey = errors.New("unsupported key")
 
-func (m *Module) Sign(key *jose.JSONWebKey, payloadStr string, header map[string]interface{}) (string, error) {
-	payload := []byte(payloadStr)
+func (m *Module) Sign(key *jose.JSONWebKey, payload map[string]interface{}, header map[string]interface{}) (string, error) {
 	opts := &jose.SignerOptions{}
 	opts = opts.WithType("JWT")
 
@@ -50,15 +49,10 @@ func (m *Module) Sign(key *jose.JSONWebKey, payloadStr string, header map[string
 		return "", err
 	}
 
-	object, err := signer.Sign(payload)
+	raw, err := jwt.Signed(signer).Claims(payload).Serialize()
 	if err != nil {
 		return "", err
 	}
 
-	str, err := object.CompactSerialize()
-	if err != nil {
-		return "", err
-	}
-
-	return str, nil
+	return raw, nil
 }
